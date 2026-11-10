@@ -1,0 +1,59 @@
+services:
+  pg_master:
+    image: postgres:16-alpine
+    container_name: pg_master
+    environment:
+      - POSTGRES_USER=labuser
+      - POSTGRES_PASSWORD=labpass
+      - POSTGRES_DB=labdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata_master:/var/lib/postgresql/data
+      - ./pg_master/init.sql:/docker-entrypoint-initdb.d/init.sql
+    depends_on:
+      pg_nodo_norte:
+        condition: service_healthy
+      pg_nodo_sur:
+        condition: service_healthy
+
+  pg_nodo_norte:
+    image: postgres:16-alpine
+    container_name: pg_nodo_norte
+    environment:
+      - POSTGRES_USER=labuser
+      - POSTGRES_PASSWORD=labpass
+      - POSTGRES_DB=labdb
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata_norte:/var/lib/postgresql/data
+      - ./pg_nodo_norte/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U labuser -d labdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  pg_nodo_sur:
+    image: postgres:16-alpine
+    container_name: pg_nodo_sur
+    environment:
+      - POSTGRES_USER=labuser
+      - POSTGRES_PASSWORD=labpass
+      - POSTGRES_DB=labdb
+    ports:
+      - "5435:5432"
+    volumes:
+      - pgdata_sur:/var/lib/postgresql/data
+      - ./pg_nodo_sur/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U labuser -d labdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata_master:
+  pgdata_norte:
+  pgdata_sur:
